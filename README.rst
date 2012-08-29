@@ -20,15 +20,16 @@ Features
 Requirements
 ============
 
-- Python 2.7 or 3.2+
-- urrlib3 <https://github.com/shazow/urllib3/>
+- Python 2.6+ or 3+
+- argparse (part of the standard library as of Python 2.7 and 3.2)
+- urrlib3 <https://github.com/shazow/urllib3>
 
 Quick start
 ===========
 
-First make sure urllib3 is installed::
+First make sure argparse and urllib3 are installed::
 
-  # pip install urllib3
+  # pip install argparse urllib3
 
 If (and only if) you are going to use Python 3 or later, issue::
 
