@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 import __future__
 import sys
@@ -238,7 +238,7 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     t.remove('noncerange')
                 headers['x-mining-extensions'] = ' '.join(t)
             else:
-                dict['x-mining-extensions'] = 'rollntime'
+                headers['x-mining-extensions'] = 'rollntime'
             while True:
                 try:
                     if is_get:
