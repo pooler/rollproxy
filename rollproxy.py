@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 
 import __future__
 import sys
@@ -171,10 +171,14 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_error(404)
             return
         headers = dict((k.lower(), v) for k, v in self.headers.items())
-        length = int(headers['content-length'])
-        body = self.rfile.read(length).decode()
-        data = json.loads(body)
-        is_get = data['method'] == 'getwork' and len(data['params']) == 0
+        try:
+            length = int(headers['content-length'])
+            body = self.rfile.read(length).decode()
+            data = json.loads(body)
+        except:
+            body = None
+        is_get = not body or (data['method'] == 'getwork' and
+                              len(data['params']) == 0)
         is_lp = self.path == self.getwork_lp_path
         username = '-'
         if 'authorization' in headers:
@@ -268,6 +272,7 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if len(pools) > 1:
                     pool_index = (pool_index + 1) % len(pools)
                     logging.warning('Switching to %s', pools[pool_index])
+                time.sleep(1)
             if r.status != 200 or data['error']:
                 body = r.data
             else:
@@ -352,6 +357,9 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     work.lock.release()
 
     def do_GET(self):
+        if self.path == self.getwork_lp_path:
+            self.do_POST()
+            return
         if self.path != '/':
             self.send_error(404)
             return
