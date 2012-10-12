@@ -388,7 +388,7 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             body += '<tr><th>Time</th><th>Result</th><th>Worker</th>'
             body += '<th>Address</th><th>Difficulty</th><th>Server</th></tr>'
             for s in solutions[:-9:-1]:
-                t = time.strftime('%Y-%m-%d %H:%M:%S %Z',
+                t = time.strftime('%Y-%m-%d %H:%M:%S',
                                   time.localtime(s['time']))
                 r = str(s['result'])
                 if 'reason' in s:
@@ -403,7 +403,7 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             body += '<tr><th>Time</th><th>Reason</th><th>Worker</th>'
             body += '<th>Address</th><th>Difficulty</th><th>Server</th></tr>'
             for s in rejections[:-9:-1]:
-                t = time.strftime('%Y-%m-%d %H:%M:%S %Z',
+                t = time.strftime('%Y-%m-%d %H:%M:%S',
                                   time.localtime(s['time']))
                 r = s['reason'] if 'reason' in s else '-'
                 d = s['value'] * 0xffff * 2 ** -48
