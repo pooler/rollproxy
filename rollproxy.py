@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 
 import __future__
 import sys
@@ -128,6 +128,7 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     getwork_lp_path = '/LP'
     force_rolls = False
     rate_time = 900
+    sharelog = None
 
     def handle_one_request(self):
         try:
@@ -195,8 +196,9 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             with stats_lock:
                 stats['local_gets'] += 1
         else:
+            solution = data['params'][0]
             try:
-                base = workbases[data['params'][0][:136]]
+                base = workbases[solution[:136]]
             except:
                 logging.error('Unknown work is being submitted')
                 base = {'pool': pools[pool_index], 'value': 0}
@@ -334,6 +336,14 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         stats['solutions'] += 1
                         if data['result']:
                             stats['accepted'] += 1
+                        if self.sharelog:
+                            self.sharelog.write(
+                                '%d,%s,%s,%s,%s,%.8f,%s,%s\n' %
+                                (sol['time'], sol['address'],
+                                 sol['username'], sol['result'],
+                                 sol['reason'] if 'reason' in sol else '',
+                                 sol['value'] * 0xffff * 2 ** -48,
+                                 sol['pool'], solution))
                     with workers_lock:
                         if solutions and (time.time() - solutions[0]['time'] >
                                           2 * self.rate_time):
@@ -486,6 +496,8 @@ if __name__ == '__main__':
                     help='force reuse of work units')
     ap.add_argument('-x', '--proxy', dest='proxy', metavar='HOST:PORT',
                     help='connect via a HTTP proxy')
+    ap.add_argument('--sharelog', dest='sharelog', metavar='FILE',
+                    help='log submissions to FILE')
     ap.add_argument('-v', '--verbose', dest='verbosity', action='count',
                     help='increase output verbosity')
     args = ap.parse_args()
@@ -504,6 +516,8 @@ if __name__ == '__main__':
     pools = [Pool(u, args.n, proxy=args.proxy) for u in args.urls]
     RollProxyHandler.protocol_version = 'HTTP/1.1'
     RollProxyHandler.force_rolls = args.force
+    if args.sharelog:
+        RollProxyHandler.sharelog = open(args.sharelog, 'a')
     server = ThreadingHTTPServer(('', args.port), RollProxyHandler)
     server.daemon_threads = True;
     logging.info('Serving HTTP on port %d' % args.port)
