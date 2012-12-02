@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = '0.5.3'
+__version__ = '0.5.4'
 
 import __future__
 import sys
@@ -129,6 +129,7 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     force_rolls = False
     rate_time = 900
     sharelog = None
+    private = False
 
     def handle_one_request(self):
         try:
@@ -373,6 +374,9 @@ class RollProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if self.path != '/':
             self.send_error(404)
             return
+        if self.private and self.client_address[0] != '127.0.0.1':
+            self.send_error(403)
+            return
         now = time.time()
         body = '<!DOCTYPE html><head><title>RollProxy</title></head>'
         body += '<body><h1>RollProxy %s</h1>' % __version__
@@ -476,6 +480,9 @@ if __name__ == '__main__':
     ap.add_argument('urls', metavar='URL', nargs='+',
                     help='URL of upstream mining server'
                          ' (including credentials)')
+    ap.add_argument('--address', dest='address', default='',
+                    help='address of network interface to listen on'
+                         ' (default: listen on all interfaces)')
     ap.add_argument('-p', '--port', dest='port', type=int, default=8345,
                     help='port to serve on (default: 8345)')
     ap.add_argument('-n', '--size', dest='n', type=int, default=100,
@@ -498,6 +505,8 @@ if __name__ == '__main__':
                     help='connect via a HTTP proxy')
     ap.add_argument('--sharelog', dest='sharelog', metavar='FILE',
                     help='log submissions to FILE')
+    ap.add_argument('--private', dest='private', action='store_true',
+                    help='only allow localhost to access the web interface')
     ap.add_argument('-v', '--verbose', dest='verbosity', action='count',
                     help='increase output verbosity')
     args = ap.parse_args()
@@ -518,7 +527,8 @@ if __name__ == '__main__':
     RollProxyHandler.force_rolls = args.force
     if args.sharelog:
         RollProxyHandler.sharelog = open(args.sharelog, 'a')
-    server = ThreadingHTTPServer(('', args.port), RollProxyHandler)
+    RollProxyHandler.private = args.private
+    server = ThreadingHTTPServer((args.address, args.port), RollProxyHandler)
     server.daemon_threads = True;
     logging.info('Serving HTTP on port %d' % args.port)
     try:
